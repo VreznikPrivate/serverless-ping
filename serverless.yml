@@ -1,29 +1,55 @@
-org: rvadik
-app: serverless-ping
 service: serverless-ping
+package:
+  patterns:
+    - '!my-layers'
+    - '!LICENSE'
+    - '!readme.md'
+    - '!requirements.txt'
+  #  - '!vendord/**'
+  #  - '!site-packages'
 provider:
   name: aws
+  region: us-east-2
   stage: dev
-  runtime: python3.6
+  runtime: python3.9
   memorySize: 128
   timeout: 1
   environment:
-    SERVICE_STAGE: serverless-ping-HomeBase-dev
+    SERVICE_STAGE: serverless-ping-HomeBase
     PING_METRIC_NAME: ${self:provider.environment.SERVICE_STAGE}
     PING_ALARM_NAMESPACE: ${opt:ping-alarm-namespace, 'Serverless/Ping'}
     PING_NAME: 'HomeBasele'
     PING_HOST: 'homebase.reznikcloud.com'
+    PING_PORT: 40443
     PING_ALARM_EMAIL: 'rvadik@gmail.com'
     SENTRY_DSN: ''
     
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - cloudwatch:PutMetricData
-      Resource: "*"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - cloudwatch:PutMetricData
+          Resource: "*"
+layers:
+  ping-layer:
+    name: ${self:service}-${self:provider.stage}-layer
+    description: 'Python requirements lambda layer'
+    path: vendored/
+    compatibleRuntimes:
+      - python3.9
+      - python3.8
+      - python3.6
+    allowedAccounts:
+      - '*'
+
 functions:
-  ping:
-    handler: handler.ping
+  ping_tester:
+    handler: handler.pingtest
+    
+   # layers: 
+   #   - arn:aws:lambda:us-east-2:528025216992:layer:serverless-ping-dev-layer:9
+
     events:
       - schedule: rate(1 minute)
 resources:
@@ -61,3 +87,10 @@ resources:
           - Ref: SNSTopic
         OKActions:
           - Ref: SNSTopic
+custom:
+    noDeploy:
+     - json
+     - boto3
+     - os
+     - time
+     - logging

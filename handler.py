@@ -3,16 +3,19 @@ import os
 import time
 import boto3
 import logging
+import sys
+import socket
+import re
 
-import sys, os  # noqa
+
 # get this file's directory independent of where it's run from
 here = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(here, "vendored"))
 
-import requests  # noqa
-from raven.contrib.awslambda import LambdaClient  # noqa
+#import requests  # noqa
+#from raven.contrib.awslambda import LambdaClient  # noqa
 
-raven_client = LambdaClient()
+#raven_client = LambdaClient()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -52,22 +55,26 @@ def publish_elapsed_time_for_host(elapsed_time, host):
     )
 
 
-@raven_client.capture_exceptions
-def ping(event, context):
+def pingtest(event, context):
     ping_host = os.environ.get('PING_HOST')
-
+    ping_port = os.environ.get('PING_PORT')
     start = current_time_in_seconds()
+    
+    s = socket.socket()
+    s.settimeout(1)
 
-    response = os.system("ping -c 1 " + ping_host)
-    # and then check the response...
-    if response == 0:
+    msg = "Attempting to connect to "  + ping_host +  " on port " +  ping_port
+    logger.info(msg)
+    try:
+        s.connect((ping_host, 40443))
         logger.info("Success")
-    else:
+        elapsed_time = current_time_in_seconds() - start
+        publish_elapsed_time_for_host(elapsed_time, ping_host)
+        return response_with_message("Pinged: {} Duration: {}".format(ping_host, elapsed_time))
+    except socket.error:
+        logger.info("Failed")
+        #logger.info(e)
         publish_elapsed_time_for_host(0, ping_host)
-        return response_with_message("Checked failed for {}, {}".format(ping_host, str(e)))
-        
-
-    elapsed_time = current_time_in_seconds() - start
-    publish_elapsed_time_for_host(elapsed_time, ping_host)
-
-    return response_with_message("Pinged: {} Duration: {}".format(ping_host, elapsed_time))
+        return response_with_message("Checked failed for {}, {}".format(ping_host))
+    finally:
+        s.close()    

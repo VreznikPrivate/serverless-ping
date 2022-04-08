@@ -2,7 +2,7 @@ language: python
 cache:
   pip: true
 python:
-  - 3.6
+  - 3.9
 install:
   - pip install boto3  # Available in lambda environment
   - pip install mock
