@@ -145,7 +145,7 @@ class HTTPDigestAuth(AuthBase):
             def md5_utf8(x):
                 if isinstance(x, str):
                     x = x.encode('utf-8')
-                return hashlib.md5(x).hexdigest()
+               
             hash_utf8 = md5_utf8
         elif _algorithm == 'SHA':
             def sha_utf8(x):
