@@ -79,7 +79,7 @@ def extract_auth_vars(request):
     return None
 
 
-@csrf_exempt
+
 @require_http_methods(['GET', 'POST', 'OPTIONS'])
 @never_cache
 @with_origin
