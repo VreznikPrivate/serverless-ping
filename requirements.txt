@@ -1,6 +1,6 @@
 requests==2.31.0
 chardet==3.0.4
 idna==2.6
-urllib3==1.26.5
+urllib3==1.26.19
 certifi==2023.7.22
 
